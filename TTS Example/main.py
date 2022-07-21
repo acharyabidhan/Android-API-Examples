@@ -16,7 +16,7 @@ class Text2SpeechDemo(BoxLayout):
             popup.open()
 
 
-class Text2SpeechDemoApp(App):
+class TextToSpeechDemoApp(App):
     def build(self):
         return Text2SpeechDemo()
 
@@ -29,4 +29,4 @@ class ErrorPopup(Popup):
 
 
 if __name__ == '__main__':
-    Text2SpeechDemoApp().run()
+    TextToSpeechDemoApp().run()
