@@ -1,98 +1,56 @@
-from kivy.lang import Builder
+from kivy.clock import mainthread
 from plyer import gps
 from kivy.app import App
-from kivy.properties import StringProperty
-from kivy.clock import mainthread
 from kivy.utils import platform
+from kivy.lang import Builder
+from kivy.properties import StringProperty
 from android.permissions import request_permissions, Permission
 
-kv = '''
-BoxLayout:
-    orientation: 'vertical'
+KV = """
+GridLayout:
+    rows:2
     Label:
-        text: app.gps_location
-    Label:
-        text: app.gps_status
-    BoxLayout:
-        size_hint_y: None
-        height: '48dp'
-        padding: '4dp'
-        ToggleButton:
-            text: 'Start' if self.state == 'normal' else 'Stop'
-            on_state:
-                app.start(1000, 0) if self.state == 'down' else \
-                app.stop()
-'''
+        text:app.gps_location
+        font_size:self.width/8
+    ToggleButton:
+        text:"Start" if self.state == "normal" else "Stop"
+        font_size:self.width/8
+        on_state:app.startGPS() if self.state == "down" else app.stopGPS()
+"""
 
 class GpsTest(App):
-
     gps_location = StringProperty()
-    gps_status = StringProperty('Click Start to get GPS location updates')
-
-    def request_android_permissions(self):
-        """
-        Since API 23, Android requires permission to be requested at runtime.
-        This function requests permission and handles the response via a
-        callback.
-        The request will produce a popup if permissions have not already been
-        been granted, otherwise it will do nothing.
-        """
-
-        def callback(permissions, results):
-            """
-            Defines the callback to be fired when runtime permission
-            has been granted or denied. This is not strictly required,
-            but added for the sake of completeness.
-            """
-            if all([res for res in results]):
-                print("callback. All permissions granted.")
-            else:
-                print("callback. Some permissions refused.")
-
-        request_permissions([Permission.ACCESS_COARSE_LOCATION,
-                             Permission.ACCESS_FINE_LOCATION], callback)
-        # # To request permissions without a callback, do:
-        # request_permissions([Permission.ACCESS_COARSE_LOCATION,
-        #                      Permission.ACCESS_FINE_LOCATION])
-
     def build(self):
-        try:
-            gps.configure(on_location=self.on_location,
-                          on_status=self.on_status)
-        except NotImplementedError:
-            import traceback
-            traceback.print_exc()
-            self.gps_status = 'GPS is not implemented for your platform'
+        try:gps.configure(on_location=self.onLocation,on_status=self.onStatus)
+        except:print("GPS not available")
+        if platform == "android":self.askForPermission()
+        else:print("This is not Android")
+        return Builder.load_string(KV)
+    
+    def callback(self, permissions, results):
+        if all([res for res in results]):
+            print("Callback: All permissions granted.")
+        else:print("Callback: Some permissions refused.")
+        print("Permissions:", permissions)
 
-        if platform == "android":
-            print("gps.py: Android detected. Requesting permissions")
-            self.request_android_permissions()
+    def askForPermission(self):
+        request_permissions(
+            [Permission.ACCESS_COARSE_LOCATION,
+            Permission.ACCESS_FINE_LOCATION],
+            self.callback)
 
-        return Builder.load_string(kv)
+    def startGPS(self):
+        gps.start(1, 1)
 
-    def start(self, minTime, minDistance):
-        gps.start(minTime, minDistance)
-
-    def stop(self):
+    def stopGPS(self):
         gps.stop()
 
     @mainthread
-    def on_location(self, **kwargs):
-        self.gps_location = '\n'.join([
-            '{}={}'.format(k, v) for k, v in kwargs.items()])
+    def onLocation(self, **kwargs):
+        self.gps_location = "\n".join(["{}={}".format(v, d) for v, d in kwargs.items()])
 
-    @mainthread
-    def on_status(self, stype, status):
-        self.gps_status = 'type={}\n{}'.format(stype, status)
-
-    def on_pause(self):
-        gps.stop()
-        return True
-
-    def on_resume(self):
-        gps.start(1000, 0)
+    def onStatus(self, stype, status):
         pass
-
 
 if __name__ == '__main__':
     GpsTest().run()
