@@ -1,32 +1,28 @@
-import kivy
 from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.popup import Popup
-
+from kivy.lang import Builder
 from plyer import tts   
 
-kivy.require("2.1.0")
+KV = """
+BoxLayout:
+    orientation: "vertical"
+    TextInput:
+        id: text2say
+        text: "Enter your text here"
+        font_size:30
+    Button:
+        text: "Read"
+        font_size:30
+        size_hint_y:0.2
+        on_release:app.readText()
+"""
 
-class Text2SpeechDemo(BoxLayout):
-    def do_read(self):
-        try:
-            tts.speak(self.ids.notification_text.text)
-        except NotImplementedError:
-            popup = ErrorPopup()
-            popup.open()
-
-
-class TextToSpeechDemoApp(App):
+class TextToSpeechApp(App):
     def build(self):
-        return Text2SpeechDemo()
-
-    def on_pause(self):
-        return True
-
-
-class ErrorPopup(Popup):
-    pass
-
+        return Builder.load_string(KV)
+    
+    def readText(self):
+        try:tts.speak(self.root.ids.text2say.text)
+        except Exception as e:pass
 
 if __name__ == '__main__':
-    TextToSpeechDemoApp().run()
+    TextToSpeechApp().run()

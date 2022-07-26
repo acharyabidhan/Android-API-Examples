@@ -1,4 +1,3 @@
-from kivy.clock import mainthread
 from plyer import gps
 from kivy.app import App
 from kivy.utils import platform
@@ -11,10 +10,8 @@ GridLayout:
     rows:2
     Label:
         text:app.gps_location
-        font_size:self.width/8
     ToggleButton:
         text:"Start" if self.state == "normal" else "Stop"
-        font_size:self.width/8
         on_state:app.startGPS() if self.state == "down" else app.stopGPS()
 """
 
@@ -22,16 +19,13 @@ class GpsTest(App):
     gps_location = StringProperty()
     def build(self):
         try:gps.configure(on_location=self.onLocation,on_status=self.onStatus)
-        except:print("GPS not available")
+        except:pass
         if platform == "android":self.askForPermission()
-        else:print("This is not Android")
+        else:pass
         return Builder.load_string(KV)
     
     def callback(self, permissions, results):
-        if all([res for res in results]):
-            print("Callback: All permissions granted.")
-        else:print("Callback: Some permissions refused.")
-        print("Permissions:", permissions)
+        pass
 
     def askForPermission(self):
         request_permissions(
@@ -40,13 +34,20 @@ class GpsTest(App):
             self.callback)
 
     def startGPS(self):
-        gps.start(1, 1)
+        gps.start(100, 1)
 
     def stopGPS(self):
         gps.stop()
 
-    @mainthread
     def onLocation(self, **kwargs):
+        try:
+            print("Latitude:",kwargs["lat"])
+            print("Longitude:",kwargs["lon"])
+            print("Speed:",kwargs["speed"])
+            print("Bearing:",kwargs["bearing"])
+            print("Altitude:",kwargs["altitude"])
+            print("Accuracy:",kwargs["accuracy"])
+        except:pass
         self.gps_location = "\n".join(["{}={}".format(v, d) for v, d in kwargs.items()])
 
     def onStatus(self, stype, status):
